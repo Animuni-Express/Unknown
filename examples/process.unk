@@ -1,0 +1,9 @@
+// Requires Git to be installed and available on PATH.
+import process
+
+result = process.run("git", ["--version"])
+if (result.code == 0):
+    print(result.stdout)
+else:
+    print("Git exited with code", result.code)
+    print(result.stderr)

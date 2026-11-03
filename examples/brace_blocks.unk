@@ -1,0 +1,11 @@
+fn square(int number) -> int {
+    return number * number
+}
+
+for (number in range(1, 5)) {
+    if (number == 3) {
+        print("Three squared:", square(number))
+    } else {
+        print(number, "squared:", square(number))
+    }
+}

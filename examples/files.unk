@@ -1,0 +1,13 @@
+import file
+
+// Run from the project root to read its README.
+path = "README.md"
+if (file.exists(path)):
+    contents = file.read(path)
+    print("README characters:", len(contents))
+
+    input = open(path, "r")
+    print("File handle read:", len(input.read()), "characters")
+    input.close()
+else:
+    print("Run this example from the Unknown project root.")

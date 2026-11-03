@@ -1,0 +1,8 @@
+str name = "Unknown"
+int age = 14
+bool ready = true
+message = "Welcome to " + name
+
+print(message)
+print("Age:", age, "Ready:", ready)
+print("Nothing:", none)

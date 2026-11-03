@@ -1,0 +1,9 @@
+// Print the first ten Fibonacci numbers.
+int previous = 0
+int current = 1
+
+for (i in range(10)):
+    print(previous)
+    next = previous + current
+    previous = current
+    current = next

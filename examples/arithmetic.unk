@@ -1,0 +1,8 @@
+int price = 12
+int quantity = 3
+total = price * quantity
+
+print("Total:", total)
+print("After discount:", total - 5)
+print("Half:", total / 2)
+print("Order of operations:", 2 + 3 * 4)

@@ -1,0 +1,13 @@
+// Lists can be changed and shared by name.
+scores = [12, 18, 15]
+scores.append(20)
+scores[0] = 14
+
+int total = 0
+for (score in scores):
+    total += score
+
+settings = {"name": "Unknown", "rounds": 4}
+settings["rounds"] = len(scores)
+print(settings["name"], "scores:", scores)
+print("Rounds:", settings["rounds"], "Total:", total)

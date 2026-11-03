@@ -1,0 +1,8 @@
+fn greet(str name):
+    print("Hello,", name)
+
+fn square(int number):
+    return number * number
+
+greet("Unknown")
+print("Square of 5:", square(5))
