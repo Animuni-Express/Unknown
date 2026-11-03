@@ -6,3 +6,6 @@ edition = "2021"
 [[bin]]
 name = "unk"
 path = "src/main.rs"
+
+[dependencies]
+ush-core = { path = "USH/rust-core" }

@@ -1,6 +1,9 @@
+//! Convert source text into positioned tokens and indentation markers.
+
 use crate::diagnostic::{Diagnostic, Span};
 
 #[derive(Debug, Clone, PartialEq)]
+/// Token categories; keywords are represented as identifiers.
 pub enum Kind {
     Identifier(String),
     Integer(i64),
@@ -39,6 +42,7 @@ pub enum Kind {
 }
 
 #[derive(Debug, Clone)]
+/// A token with the source information needed for diagnostics.
 pub struct Token {
     pub kind: Kind,
     pub line: usize,
@@ -48,6 +52,14 @@ pub struct Token {
     pub length: usize,
 }
 
+/// Tokenize source, rejecting malformed literals and inconsistent indentation.
+// ============================================================
+// LEXICAL ANALYSIS
+//
+// Convert source text into tokens carrying their original positions.
+// Comments are replaced with spaces before tokenization.
+// Indent and dedent tokens describe changes in indentation.
+// ============================================================
 pub fn lex(source: &str, filename: &str) -> Result<Vec<Token>, Diagnostic> {
     let span = |line: usize, column: usize, length: usize| Span {
         filename: filename.to_owned(),
@@ -68,6 +80,7 @@ pub fn lex(source: &str, filename: &str) -> Result<Vec<Token>, Diagnostic> {
     let mut quote = None;
     let mut block = None;
     let mut line_comment = false;
+    // Replace comments with spaces so original line and column positions survive.
     while i < chars.len() {
         let ch = chars[i];
         let next = chars.get(i + 1).copied();
@@ -151,6 +164,7 @@ pub fn lex(source: &str, filename: &str) -> Result<Vec<Token>, Diagnostic> {
                 length,
             })
         };
+        // The stack converts changes in indentation into explicit block tokens.
         if i > *indents.last().unwrap() {
             indents.push(i);
             push(Kind::Indent, 1, 1);

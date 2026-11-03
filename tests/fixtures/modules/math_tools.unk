@@ -1,0 +1,19 @@
+import "offsets"
+int factor = 3
+len = 99
+print("loading math_tools")
+
+fn scale(int value) -> int:
+    return value * factor + offsets.offset
+
+fn twice(int value) -> int:
+    return scale(value) + scale(value)
+
+fn next_factor() -> int:
+    factor += 1
+    return factor
+
+fn leak() -> int:
+    return outside
+
+print("initialized:", scale(1))

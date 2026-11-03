@@ -1,6 +1,14 @@
+//! Source locations and human-readable errors used throughout the pipeline.
+
 use std::fmt;
 
 #[derive(Debug, Clone)]
+/// A source range and its original line, retained for error display.
+// ============================================================
+// SOURCE LOCATIONS
+//
+// Record the filename, position, and original line for a diagnostic.
+// ============================================================
 pub struct Span {
     pub filename: String,
     pub line: usize,
@@ -10,6 +18,12 @@ pub struct Span {
 }
 
 #[derive(Debug, Clone)]
+/// An error code and message with optional corrective context.
+// ============================================================
+// DIAGNOSTICS
+//
+// Carry an error code, message, source location, and optional help.
+// ============================================================
 pub struct Diagnostic {
     pub code: &'static str,
     pub message: String,
@@ -30,6 +44,11 @@ impl Diagnostic {
     }
 }
 
+// ============================================================
+// DIAGNOSTIC DISPLAY
+//
+// Render the source line and underline the relevant position.
+// ============================================================
 impl fmt::Display for Diagnostic {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let span = &self.span;

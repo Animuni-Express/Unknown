@@ -1,0 +1,30 @@
+// Explore host information, paths, timing, and loop control.
+import "envar"
+import "path"
+import "process"
+import "system"
+import "time"
+import "unknown-shell" as "ush"
+
+ush.write_line("Unknown system test")
+print("OS:", system.os())
+print("Arch:", system.arch())
+print("PID:", process.pid())
+print("CWD:", process.cwd())
+if (envar.exists("USERPROFILE")) {
+    print("Home:", envar.get("USERPROFILE"))
+}
+p = path.join(process.cwd(), "example.txt")
+start = time.monotonic()
+ush.write_line("Path: " + p)
+finish = time.monotonic()
+print("Elapsed:", finish - start)
+for (i in range(10)) {
+    if (i == 2) {
+        continue
+    }
+    if (i == 5) {
+        break
+    }
+    print(i)
+}

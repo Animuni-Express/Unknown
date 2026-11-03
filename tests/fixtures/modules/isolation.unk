@@ -1,0 +1,3 @@
+int outside = 42
+import "math_tools"
+print(math_tools.leak())

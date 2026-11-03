@@ -1,3 +1,4 @@
+// Braces provide an alternative to indentation-based blocks.
 fn square(int number) -> int {
     return number * number
 }

@@ -1,0 +1,3 @@
+// Import the neighboring greeter module and call its function.
+import "greeter"
+print(greeter.greet("Unknown"))

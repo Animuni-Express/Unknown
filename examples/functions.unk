@@ -1,3 +1,4 @@
+// Define functions with typed parameters and optional return values.
 fn greet(str name):
     print("Hello,", name)
 

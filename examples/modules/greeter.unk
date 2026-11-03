@@ -1,0 +1,5 @@
+// A module function can read a value from its defining module.
+greeting = "Hello"
+
+fn greet(str name) -> str:
+    return greeting + ", " + name + "!"

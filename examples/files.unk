@@ -1,4 +1,4 @@
-import file
+import "file"
 
 // Run from the project root to read its README.
 path = "README.md"

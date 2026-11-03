@@ -1,6 +1,5 @@
 // Requires Git to be installed and available on PATH.
-import process
-
+import "process"
 result = process.run("git", ["--version"])
 if (result.code == 0):
     print(result.stdout)

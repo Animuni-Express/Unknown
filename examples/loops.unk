@@ -1,3 +1,4 @@
+// Use a while loop to accumulate a running total.
 int count = 1
 int total = 0
 

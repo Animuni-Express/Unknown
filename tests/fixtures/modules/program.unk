@@ -1,0 +1,4 @@
+import "math_tools"
+import "math_tools"
+int factor = 900
+print(math_tools.twice(2), math_tools.factor, math_tools.next_factor(), factor, math_tools.len)

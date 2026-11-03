@@ -1,6 +1,15 @@
+//! Syntax trees shared by the parser and interpreter.
+
 use crate::diagnostic::Span;
 
 #[derive(Debug, Clone)]
+/// Expressions produce runtime values; `Located` carries their diagnostic position.
+// ============================================================
+// EXPRESSION SYNTAX
+//
+// Represent expressions before evaluation.
+// Located nodes retain source positions for diagnostics.
+// ============================================================
 pub enum Expr {
     Located(Box<Expr>, Span),
     Integer(i64),
@@ -18,6 +27,12 @@ pub enum Expr {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
+/// Operators retained after lexing, independent of their token spelling.
+// ============================================================
+// OPERATORS
+//
+// Represent the arithmetic, comparison, and unary operators.
+// ============================================================
 pub enum TokenOp {
     Add,
     Subtract,
@@ -33,6 +48,12 @@ pub enum TokenOp {
 }
 
 #[derive(Debug, Clone)]
+/// Statements describe execution and may carry a source location.
+// ============================================================
+// STATEMENT SYNTAX
+//
+// Represent assignments, control flow, functions, and imports.
+// ============================================================
 pub enum Stmt {
     Located(Box<Stmt>, Span),
     Assign {
@@ -50,7 +71,10 @@ pub enum Stmt {
         index: Expr,
         value: Expr,
     },
-    Import(String),
+    Import {
+        name: String,
+        alias: Option<String>,
+    },
     Expression(Expr),
     If {
         condition: Expr,
@@ -73,4 +97,6 @@ pub enum Stmt {
         body: Vec<Stmt>,
     },
     Return(Option<Expr>),
+    Break,
+    Continue,
 }

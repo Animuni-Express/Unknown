@@ -1,3 +1,4 @@
+// Compare values and choose a branch with if and else.
 int score = 75
 
 if (score >= 60):

@@ -1,1 +1,2 @@
+// Print a greeting to standard output.
 print("Hello, Unknown!")

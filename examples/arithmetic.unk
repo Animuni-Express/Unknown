@@ -1,3 +1,4 @@
+// Typed integers, arithmetic, and operator precedence.
 int price = 12
 int quantity = 3
 total = price * quantity

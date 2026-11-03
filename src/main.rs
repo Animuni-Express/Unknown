@@ -1,3 +1,5 @@
+//! Command-line entry point and end-to-end language tests.
+
 mod ast;
 mod diagnostic;
 mod interpreter;
@@ -7,6 +9,11 @@ mod value;
 
 use std::process::ExitCode;
 
+// ============================================================
+// COMMAND-LINE ENTRY POINT
+//
+// Report failures to standard error and return an appropriate exit code.
+// ============================================================
 fn main() -> ExitCode {
     match run() {
         Ok(()) => ExitCode::SUCCESS,
@@ -17,10 +24,16 @@ fn main() -> ExitCode {
     }
 }
 
+// Select inline code or a source file, then run the lexer, parser, and interpreter.
+// ============================================================
+// SOURCE EXECUTION
+//
+// Read a source file or inline code, then lex, parse, and execute it.
+// ============================================================
 fn run() -> Result<(), String> {
     let args: Vec<String> = std::env::args().collect();
     let (source, filename) = match args.as_slice() {
-        [_, command, file] if command == "run" => (
+        [_, command, file, ..] if command == "run" => (
             std::fs::read_to_string(file).map_err(|e| format!("{file}: {e}"))?,
             file.as_str(),
         ),
@@ -29,12 +42,21 @@ fn run() -> Result<(), String> {
     };
     let tokens = lexer::lex(&source, filename).map_err(|e| e.to_string())?;
     let program = parser::parse(tokens).map_err(|e| e.to_string())?;
-    interpreter::Interpreter::new(&mut std::io::stdout().lock())
-        .run(&program)
-        .map_err(|e| e.to_string())
+    let mut output = std::io::stdout().lock();
+    let mut interpreter = interpreter::Interpreter::new(&mut output);
+    if args.get(1).is_some_and(|arg| arg == "run") {
+        interpreter.set_arguments(args[3..].to_vec());
+    }
+    interpreter.run(&program).map_err(|e| e.to_string())
 }
 
 #[cfg(test)]
+// Exercise the language pipeline with in-memory output.
+// ============================================================
+// LANGUAGE TESTS
+//
+// Exercise the lexer, parser, and interpreter through the full pipeline.
+// ============================================================
 mod tests {
     use super::*;
     fn execute(source: &str) -> Result<String, String> {
@@ -108,6 +130,15 @@ mod tests {
         }
     }
     #[test]
+    fn collection_aliases_and_loop_shadowing() {
+        let source = "a = [1, 2]\nb = a\nb[0] = 9\nm = {\"x\": a}\nm[\"x\"].append(3)\nint i = 7\nfor (i in range(2)):\n    a.append(i)\nprint(b[0], len(a), i)\n";
+        assert_eq!(execute(source).unwrap(), "9 5 7\n");
+        let error = execute("int n = 3\nn += \"x\"\n").unwrap_err();
+        assert!(error.contains("incompatible types"));
+        let error = execute("import \"file\"\nfile.read(\"\")\n").unwrap_err();
+        assert!(error.contains("E5001"));
+    }
+    #[test]
     fn native_file_and_process_modules() {
         let path = std::env::temp_dir().join(format!(
             "unknown-test-{}-{}.tmp",
@@ -118,11 +149,11 @@ mod tests {
                 .as_nanos()
         ));
         let path = path.to_string_lossy().replace('\\', "/");
-        let source = format!("import file\nfile.write(\"{path}\", \"abc\")\nfile.append(\"{path}\", \"d\")\nprint(file.exists(\"{path}\"), file.read(\"{path}\"))\nfile.delete(\"{path}\")\n");
+        let source = format!("import \"file\"\nfile.write(\"{path}\", \"abc\")\nfile.append(\"{path}\", \"d\")\nprint(file.exists(\"{path}\"), file.read(\"{path}\"))\nfile.delete(\"{path}\")\n");
         assert_eq!(execute(&source).unwrap(), "true abcd\n");
-        let source = format!("f = open(\"{path}\", \"w\")\nf.write(\"hello\")\nf.close()\nf = open(\"{path}\", \"r\")\nprint(f.read())\nf.close()\nimport file\nfile.delete(\"{path}\")\n");
+        let source = format!("f = open(\"{path}\", \"w\")\nf.write(\"hello\")\nf.close()\nf = open(\"{path}\", \"r\")\nprint(f.read())\nf.close()\nimport \"file\"\nfile.delete(\"{path}\")\n");
         assert_eq!(execute(&source).unwrap(), "hello\n");
-        let source = format!("import file\nnumbers = []\nfor (i in range(1, 11)):\n    numbers.append(i)\nint total = 0\nfor (n in numbers):\n    total += n\nfile.write(\"{path}\", \"Total: \" + str(total))\nprint(\"Total:\", total)\n");
+        let source = format!("import \"file\"\nnumbers = []\nfor (i in range(1, 11)):\n    numbers.append(i)\nint total = 0\nfor (n in numbers):\n    total += n\nfile.write(\"{path}\", \"Total: \" + str(total))\nprint(\"Total:\", total)\n");
         assert_eq!(execute(&source).unwrap(), "Total: 55\n");
         assert_eq!(std::fs::read_to_string(&path).unwrap(), "Total: 55");
         std::fs::remove_file(&path).unwrap();
@@ -132,8 +163,10 @@ mod tests {
         let source = format!("f = open(\"{path}\", \"w\")\nf.close()\nf.write(\"x\")\n");
         assert!(execute(&source).unwrap_err().contains("file is closed"));
         std::fs::remove_file(&path).unwrap();
-        assert!(execute("import missing\n").unwrap_err().contains("E4001"));
-        assert!(execute("import process\nprocess.run(\"x\", [1])\n")
+        assert!(execute("import \"missing\"\n")
+            .unwrap_err()
+            .contains("E4001"));
+        assert!(execute("import \"process\"\nprocess.run(\"x\", [1])\n")
             .unwrap_err()
             .contains("arguments must be strings"));
         let executable = std::env::current_exe()
@@ -141,7 +174,7 @@ mod tests {
             .to_string_lossy()
             .replace('\\', "/");
         let source = format!(
-            "import process\nr = process.run(\"{executable}\", [\"--list\"])\nprint(r.code)\n"
+            "import \"process\"\nr = process.run(\"{executable}\", [\"--list\"])\nprint(r.code)\n"
         );
         assert_eq!(execute(&source).unwrap(), "0\n");
     }

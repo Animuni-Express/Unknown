@@ -1,7 +1,16 @@
+//! Parse positioned tokens into statements and expressions.
+
 use crate::ast::{Expr, Stmt, TokenOp};
 use crate::diagnostic::{Diagnostic, Span};
 use crate::lexer::{Kind, Token};
 
+/// Parse a complete token stream, stopping at the first syntax error.
+// ============================================================
+// PARSING
+//
+// Convert a token stream into a sequence of syntax-tree statements.
+// Syntax errors retain the location of the current token.
+// ============================================================
 pub fn parse(tokens: Vec<Token>) -> Result<Vec<Stmt>, Diagnostic> {
     let mut parser = Parser { tokens, current: 0 };
     let mut statements = Vec::new();
@@ -11,6 +20,7 @@ pub fn parse(tokens: Vec<Token>) -> Result<Vec<Stmt>, Diagnostic> {
     Ok(statements)
 }
 
+/// Cursor into the token stream produced by the lexer.
 struct Parser {
     tokens: Vec<Token>,
     current: usize,
@@ -64,13 +74,31 @@ impl Parser {
             Kind::Identifier(name)
                 if !matches!(
                     name.as_str(),
-                    "fn" | "if" | "else" | "while" | "return" | "true" | "false" | "none" | "not"
+                    "fn" | "if"
+                        | "else"
+                        | "while"
+                        | "return"
+                        | "break"
+                        | "continue"
+                        | "true"
+                        | "false"
+                        | "none"
+                        | "not"
                 ) =>
             {
                 self.current += 1;
                 Ok(name)
             }
             _ => Err(self.error("expected a name")),
+        }
+    }
+    fn import_string(&mut self, message: &str) -> Result<String, Diagnostic> {
+        match self.tokens[self.current].kind.clone() {
+            Kind::String(value) => {
+                self.current += 1;
+                Ok(value)
+            }
+            _ => Err(self.error(message)),
         }
     }
     fn type_name(&mut self) -> Option<String> {
@@ -82,16 +110,27 @@ impl Parser {
         }
         None
     }
+    // Keep the starting position on each statement for runtime diagnostics.
     fn statement(&mut self) -> Result<Stmt, Diagnostic> {
         let span = self.span();
         self.statement_inner()
             .map(|stmt| Stmt::Located(Box::new(stmt), span))
     }
+    // ============================================================
+    // STATEMENT PARSING
+    //
+    // Recognize declarations, assignments, control flow, and expressions.
+    // ============================================================
     fn statement_inner(&mut self) -> Result<Stmt, Diagnostic> {
         if self.take_word("import") {
-            let name = self.name()?;
+            let name = self.import_string("expected quoted module name")?;
+            let alias = if self.take_word("as") {
+                Some(self.import_string("expected quoted import alias")?)
+            } else {
+                None
+            };
             self.expect(&Kind::Newline, "expected end of line")?;
-            return Ok(Stmt::Import(name));
+            return Ok(Stmt::Import { name, alias });
         }
         if self.take_word("if") {
             let condition = self.parenthesized_condition()?;
@@ -164,6 +203,14 @@ impl Parser {
                 return_type,
                 body,
             });
+        }
+        if self.take_word("break") {
+            self.expect(&Kind::Newline, "expected end of line")?;
+            return Ok(Stmt::Break);
+        }
+        if self.take_word("continue") {
+            self.expect(&Kind::Newline, "expected end of line")?;
+            return Ok(Stmt::Continue);
         }
         if self.take_word("return") {
             let value = if self.at(&Kind::Newline) {
@@ -241,6 +288,12 @@ impl Parser {
         self.expect(&Kind::RightParen, "expected ')' after condition")?;
         Ok(condition)
     }
+    // Blocks accept either braces or a colon followed by indentation.
+    // ============================================================
+    // BLOCK PARSING
+    //
+    // Accept either braces or a colon followed by an indented block.
+    // ============================================================
     fn block(&mut self) -> Result<Vec<Stmt>, Diagnostic> {
         if self.take(&Kind::LeftBrace) {
             self.take(&Kind::Newline);
@@ -269,6 +322,13 @@ impl Parser {
     fn expression(&mut self) -> Result<Expr, Diagnostic> {
         self.binary(0)
     }
+    // Precedence climbing makes higher-precedence operators bind more tightly.
+    // ============================================================
+    // OPERATOR PRECEDENCE
+    //
+    // Parse binary expressions using precedence climbing.
+    // Multiplication and division bind more tightly than addition.
+    // ============================================================
     fn binary(&mut self, minimum: u8) -> Result<Expr, Diagnostic> {
         let mut left = self.unary()?;
         loop {
@@ -303,6 +363,12 @@ impl Parser {
         self.unary_inner()
             .map(|expr| Expr::Located(Box::new(expr), span))
     }
+    // Postfix indexing, member access, and calls can be chained.
+    // ============================================================
+    // UNARY AND POSTFIX EXPRESSIONS
+    //
+    // Parse unary operators followed by index, member, and call chains.
+    // ============================================================
     fn unary_inner(&mut self) -> Result<Expr, Diagnostic> {
         if self.take(&Kind::Minus) {
             return Ok(Expr::Unary(TokenOp::Subtract, Box::new(self.unary()?)));
@@ -339,6 +405,11 @@ impl Parser {
         }
         Ok(expr)
     }
+    // ============================================================
+    // PRIMARY EXPRESSIONS
+    //
+    // Parse literals, names, parenthesized expressions, lists, and maps.
+    // ============================================================
     fn primary(&mut self) -> Result<Expr, Diagnostic> {
         let result = match self.tokens[self.current].kind.clone() {
             Kind::Integer(n) => Expr::Integer(n),
