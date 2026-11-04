@@ -1,0 +1,15 @@
+export const meta = {"title":"Scope","description":"Understand block bindings, loop variables, and function visibility.","group":"Language","order":9};
+
+A scope determines where a name is visible. Block declarations and loop variables are local to their blocks. Assignment to an existing outer binding updates that binding.
+
+## Syntax
+
+A loop variable shadows an outer name for the duration of the loop. Functions look up their own locals and globals, not the calling function's locals. Imported functions keep their module's globals.
+
+## Working example
+
+<Example id="scope" />
+
+## Common mistakes
+
+Referring to a new loop variable after the loop reports E2001. Nested functions do not implement closures over enclosing locals. Explicitly pass values through parameters instead.

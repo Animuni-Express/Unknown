@@ -1,11 +1,6 @@
 //! Command-line entry point and end-to-end language tests.
 
-mod ast;
-mod diagnostic;
-mod interpreter;
-mod lexer;
-mod parser;
-mod value;
+use unknown::{interpreter, lexer, parser};
 
 use std::process::ExitCode;
 

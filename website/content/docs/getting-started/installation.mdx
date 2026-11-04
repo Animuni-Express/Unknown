@@ -1,0 +1,30 @@
+export const meta = {"title":"Installation","description":"Build and run the native Unknown interpreter from source.","group":"Getting started","order":1};
+
+Use the browser playground without installing anything. For native files, processes, or terminal input, build the CLI with a current stable Rust toolchain and Git.
+
+## Build from source
+
+```sh
+git clone https://github.com/Animuni-Express/Unknown.git
+cd Unknown
+cargo build --release --locked
+cargo run --locked -- run examples/hello.unk
+```
+
+The executable is `target/release/unk` on Linux and macOS, or `target\release\unk.exe` on Windows. No package-manager installation is currently published by this project.
+
+## Run a file
+
+```sh
+unk run program.unk
+```
+
+Pass additional arguments after the filename. Programs read those through `process.args()`. Inline source uses `unk -c 'print("Hello")'`; shell quoting varies, so files are the most portable option.
+
+## Native permissions
+
+The native interpreter has your process's filesystem and process permissions. Run programs you trust. Browser files are an isolated virtual workspace and are not your computer's files.
+
+## Check the installation
+
+Run `cargo test --locked` in the repository. [Hello world](/docs/getting-started/hello-world/) explains the first program.

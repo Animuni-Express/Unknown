@@ -39,6 +39,14 @@ functions can read their module's globals. See `examples/modules/main.unk`.
 
 Run the tests with `cargo test`.
 
+## Unknown Trying website
+
+The shared interpreter library also powers the browser documentation and playground
+in [`website/`](website/README.md). Unknown and the integrated USH Rust core execute
+through WebAssembly in a worker and share a virtual filesystem. The same static
+Next.js codebase targets ChatGPT Sites and GitHub Pages; see the website README for
+development, independent host builds, verification, deployment, and browser limits.
+
 The `examples` directory also contains runnable programs for collections,
 Fibonacci numbers, brace blocks, file operations, and process execution. Run
 one with, for example, `cargo run -- run examples/collections.unk`. The process

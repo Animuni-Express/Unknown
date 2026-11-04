@@ -1,0 +1,15 @@
+export const meta = {"title":"Variables","description":"Name values with inference or explicit runtime type checks.","group":"Language","order":3};
+
+A variable associates a name with a value. Assignment can infer the value's type, or declare `int`, `str`, or `bool` explicitly.
+
+## Syntax
+
+Use `name = expression` or `type name = expression`. Names are case-sensitive. Explicit declarations are checked on subsequent assignment; inferred bindings may change value type.
+
+## Working example
+
+<Example id="variables" />
+
+## Common mistakes
+
+Using a name before assigning it reports E2001. Assigning a string to an explicitly declared `int` reports E2002. `const` and `constexpr` are not supported. See [scope](/docs/language/scope/) for block visibility.

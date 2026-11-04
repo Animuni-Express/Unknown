@@ -1,0 +1,35 @@
+export const meta = {"title":"USH and workspace files","description":"Use the real Rust USH command dispatcher with browser-local files.","group":"Reference","order":13};
+
+USH is Unknown Shell. The playground compiles its Rust command core to WebAssembly alongside Unknown and provides both with the same virtual filesystem.
+
+## Run shell commands
+
+Select `session.ush` or create a `.ush` file. Each nonempty line is one command. Quoted arguments are supported; pipelines, redirection, variable expansion, and shell operators are not implemented by this browser adapter.
+
+```text
+where
+list
+make folder notes
+make file notes/demo.txt
+read README.txt
+copy README.txt notes/readme.txt
+goto notes
+list --sort=name
+back
+```
+
+## Commands
+
+The shared dispatcher supports `list`, `goto`, `back`, `where`, `make file`, `make folder`, `read`, `copy`, `move`, `delete`, `clear` (or `cls`), `help`, and `exit`. Use `help` or a command with `--help` for syntax. Copy and move do not overwrite existing destinations. Deleting a nonempty directory is rejected.
+
+`delete path --force` is required in this noninteractive workspace. **Clear console** clears the visible output; shell clear emits its normal terminal escape sequence, which the output panel removes.
+
+## Persistence and limits
+
+The workspace has a 1 MiB total file limit, 256 entries, and 512-character virtual paths. Source and captured output are each limited to 64 KiB. Programs time out after five seconds. Files are saved locally after a completed run. Stopping or timing out discards that run's pending filesystem changes.
+
+Local storage can be cleared by the browser. Use **Download file** for a copy you want to keep. Shared links include only the active source, not other workspace files.
+
+## Native capabilities
+
+Native programs and machine filesystem access are unavailable in the browser. An unrecognized command reports this limitation instead of spawning a process. Native USH retains its existing process behavior.

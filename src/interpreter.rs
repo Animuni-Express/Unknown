@@ -6,7 +6,12 @@ use crate::value::{ModuleScope, Value};
 use std::collections::{HashMap, HashSet};
 use std::io::Write;
 use std::path::PathBuf;
+#[cfg(not(target_arch = "wasm32"))]
+use std::time::Instant;
 use std::{cell::RefCell, rc::Rc};
+use ush_core::filesystem as fs;
+#[cfg(target_arch = "wasm32")]
+use web_time::Instant;
 
 /// Control flow propagated through nested blocks until its owner handles it.
 // ============================================================
@@ -37,7 +42,7 @@ pub struct Interpreter<'a> {
     function_depth: usize,
     loop_depth: usize,
     arguments: Vec<String>,
-    started: std::time::Instant,
+    started: Instant,
     current_span: Option<Span>,
     function_scopes: Vec<usize>,
     module_context: Vec<Option<Rc<ModuleScope>>>,
@@ -65,7 +70,7 @@ impl<'a> Interpreter<'a> {
             function_depth: 0,
             loop_depth: 0,
             arguments: Vec::new(),
-            started: std::time::Instant::now(),
+            started: Instant::now(),
             current_span: None,
             function_scopes: Vec::new(),
             module_context: Vec::new(),
@@ -152,8 +157,7 @@ impl<'a> Interpreter<'a> {
                 .unwrap_or(std::path::Path::new("."))
         };
         let path = base.join(format!("{name}.unk"));
-        let path = path
-            .canonicalize()
+        let path = fs::canonicalize(path)
             .map_err(|e| self.error("E4001", format!("cannot import '{name}': {e}")))?;
         if let Some(module) = self.modules.borrow().get(&path).cloned() {
             return Ok(Value::UserModule(module));
@@ -162,7 +166,7 @@ impl<'a> Interpreter<'a> {
             return Err(self.error("E4003", format!("circular import of '{name}'")));
         }
         let result = (|| {
-            let source = std::fs::read_to_string(&path)
+            let source = fs::read_to_string(&path)
                 .map_err(|e| self.error("E4001", format!("cannot import '{name}': {e}")))?;
             let filename = path.to_string_lossy();
             let tokens = crate::lexer::lex(&source, &filename)?;
@@ -707,7 +711,7 @@ impl<'a> Interpreter<'a> {
         match (name, args.as_slice()) {
             ("str", [value]) => Ok(Value::String(value.to_string())),
             ("open", [Value::String(path), Value::String(mode)]) => {
-                let mut options = std::fs::OpenOptions::new();
+                let mut options = fs::OpenOptions::new();
                 match mode.as_str() {
                     "r" => {
                         options.read(true);
@@ -748,6 +752,20 @@ impl<'a> Interpreter<'a> {
     // Host failures are converted into interpreter diagnostics.
     // ============================================================
     fn native(&mut self, module: &str, name: &str, args: Vec<Value>) -> Result<Value, Diagnostic> {
+        #[cfg(target_arch = "wasm32")]
+        if matches!(
+            (module, name),
+            ("process", "run" | "pid")
+                | ("system", "hostname" | "cpu_count")
+                | ("time", "sleep")
+                | ("unknown-shell", "read_line")
+        ) || module == "envar"
+        {
+            return Err(self.error(
+                "E5001",
+                format!("{module}.{name} is unavailable in the browser sandbox"),
+            ));
+        }
         use std::io::IsTerminal;
         if module == "unknown-shell" {
             let result = match (name, args.as_slice()) {
@@ -785,10 +803,10 @@ impl<'a> Interpreter<'a> {
         let io_error =
             |error: std::io::Error| self.error("E5001", format!("{module}.{name}: {error}"));
         match (module, name, args.as_slice()) {
-            ("process", "cwd", []) => std::env::current_dir()
+            ("process", "cwd", []) => fs::current_dir()
                 .map(|p| Value::String(p.to_string_lossy().into_owned()))
                 .map_err(io_error),
-            ("process", "chdir", [Value::String(path)]) => std::env::set_current_dir(path)
+            ("process", "chdir", [Value::String(path)]) => fs::set_current_dir(path)
                 .map(|()| Value::None)
                 .map_err(io_error),
             ("process", "args", []) => Ok(Value::List(Rc::new(RefCell::new(
@@ -852,32 +870,28 @@ impl<'a> Interpreter<'a> {
                     .map(|v| Value::String(v.to_string_lossy().into_owned()))
                     .unwrap_or(Value::None))
             }
-            ("path", "absolute", [Value::String(path)]) => std::path::absolute(path)
+            ("path", "absolute", [Value::String(path)]) => fs::absolute(path)
                 .map(|p| Value::String(p.to_string_lossy().into_owned()))
                 .map_err(io_error),
-            ("path", "exists", [Value::String(path)]) => std::path::Path::new(path)
-                .try_exists()
-                .map(Value::Boolean)
-                .map_err(io_error),
-            ("path", "is_file" | "is_dir", [Value::String(path)]) => {
-                match std::fs::metadata(path) {
-                    Ok(meta) => Ok(Value::Boolean(if name == "is_file" {
-                        meta.is_file()
-                    } else {
-                        meta.is_dir()
-                    })),
-                    Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(Value::Boolean(false)),
-                    Err(e) => Err(io_error(e)),
-                }
+            ("path", "exists", [Value::String(path)]) => {
+                fs::exists(path).map(Value::Boolean).map_err(io_error)
             }
+            ("path", "is_file" | "is_dir", [Value::String(path)]) => match fs::metadata(path) {
+                Ok(meta) => Ok(Value::Boolean(if name == "is_file" {
+                    meta.is_file()
+                } else {
+                    meta.is_dir()
+                })),
+                Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(Value::Boolean(false)),
+                Err(e) => Err(io_error(e)),
+            },
             ("system", "os", []) => Ok(Value::String(std::env::consts::OS.into())),
             ("system", "arch", []) => Ok(Value::String(std::env::consts::ARCH.into())),
             ("system", "hostname", []) => hostname().map(Value::String).map_err(io_error),
             ("system", "cpu_count", []) => std::thread::available_parallelism()
                 .map(|n| Value::Integer(n.get() as i64))
                 .map_err(io_error),
-            ("time", "now", []) => std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
+            ("time", "now", []) => clock_now()
                 .map(|n| Value::Integer(n.as_millis().min(i64::MAX as u128) as i64))
                 .map_err(|e| self.error("E5001", format!("time.now: {e}"))),
             ("time", "monotonic", []) => Ok(Value::Integer(
@@ -887,16 +901,14 @@ impl<'a> Interpreter<'a> {
                 std::thread::sleep(std::time::Duration::from_millis(*ms as u64));
                 Ok(Value::None)
             }
-            ("file", "read", [Value::String(path)]) => std::fs::read_to_string(path)
+            ("file", "read", [Value::String(path)]) => fs::read_to_string(path)
                 .map(Value::String)
                 .map_err(io_error),
-            ("file", "write", [Value::String(path), Value::String(data)]) => {
-                std::fs::write(path, data)
-                    .map(|()| Value::None)
-                    .map_err(io_error)
-            }
+            ("file", "write", [Value::String(path), Value::String(data)]) => fs::write(path, data)
+                .map(|()| Value::None)
+                .map_err(io_error),
             ("file", "append", [Value::String(path), Value::String(data)]) => {
-                let mut file = std::fs::OpenOptions::new()
+                let mut file = fs::OpenOptions::new()
                     .create(true)
                     .append(true)
                     .open(path)
@@ -905,11 +917,10 @@ impl<'a> Interpreter<'a> {
                     .map(|()| Value::None)
                     .map_err(io_error)
             }
-            ("file", "exists", [Value::String(path)]) => std::path::Path::new(path)
-                .try_exists()
-                .map(Value::Boolean)
-                .map_err(io_error),
-            ("file", "delete", [Value::String(path)]) => std::fs::remove_file(path)
+            ("file", "exists", [Value::String(path)]) => {
+                fs::exists(path).map(Value::Boolean).map_err(io_error)
+            }
+            ("file", "delete", [Value::String(path)]) => fs::remove_file(path)
                 .map(|()| Value::None)
                 .map_err(io_error),
             ("process", "run", [Value::String(program), Value::List(arguments)]) => {
@@ -1018,6 +1029,21 @@ impl<'a> Interpreter<'a> {
                 _ => Err("operands have incompatible types".into()),
             },
         }
+    }
+}
+
+fn clock_now() -> Result<std::time::Duration, String> {
+    #[cfg(target_arch = "wasm32")]
+    {
+        web_time::SystemTime::now()
+            .duration_since(web_time::UNIX_EPOCH)
+            .map_err(|e| e.to_string())
+    }
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map_err(|e| e.to_string())
     }
 }
 

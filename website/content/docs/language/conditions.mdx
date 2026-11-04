@@ -1,0 +1,15 @@
+export const meta = {"title":"Conditions","description":"Choose a branch with if, else if, and else.","group":"Language","order":6};
+
+An `if` statement runs a block when its condition evaluates to `true`. An `else if` tests the next condition, and `else` handles the remaining case.
+
+## Syntax
+
+Parentheses around a condition are required. Conditions must be booleans. Follow the closing parenthesis with `:` and an indented block, or with a brace block. Write `else if`, never `elif`.
+
+## Working example
+
+<Example id="conditions" />
+
+## Common mistakes
+
+`if true:` is missing parentheses. `if (1):` has a non-boolean condition. A colon block needs a consistently space-indented body. See [errors](/docs/errors/#indentation) for indentation diagnostics.

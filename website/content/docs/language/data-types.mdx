@@ -1,0 +1,23 @@
+export const meta = {"title":"Data types","description":"Integers, strings, booleans, lists, maps, and none.","group":"Language","order":4};
+
+Unknown has integers, strings, booleans, lists, string-keyed maps, and `none`. Explicit variable and function annotations currently accept only `int`, `str`, and `bool`.
+
+## Integers
+
+`int` is signed 64-bit. Arithmetic overflow and division by zero report errors. Division truncates toward zero. Floating point and unsigned fixed-width integer types are not implemented.
+
+<Example id="types" />
+
+## Strings
+
+Use single or double quotes. Supported escapes include `\n`, `\t`, `\r`, `\\`, `\'`, and `\"`. `len` counts Unicode characters in strings. `str(value)` converts a value to display text.
+
+## Collections
+
+Lists use brackets and integer indices starting at zero. Maps use braces with string keys. Both support indexed assignment; lists also support `.append(value)`. Assigning a collection shares it rather than copying its contents.
+
+<Example id="collections" />
+
+## Common mistakes
+
+An out-of-range index or missing map key reports E2004. Map keys must be strings. An explicit `float` or `uint8` declaration is unsupported.

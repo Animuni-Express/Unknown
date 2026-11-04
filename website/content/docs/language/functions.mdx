@@ -1,0 +1,15 @@
+export const meta = {"title":"Functions","description":"Define reusable behavior with parameters and return values.","group":"Language","order":8};
+
+Functions group statements and optionally return a value. Calls evaluate arguments and check their count and any declared types.
+
+## Syntax
+
+Use `fn name(type argument) -> type` followed by a brace or indentation block. Parameter annotations and the return annotation can be omitted. `return expression` exits the current function. A function without a returned value produces `none`.
+
+## Working example
+
+<Example id="functions" />
+
+## Common mistakes
+
+Wrong argument counts or incompatible annotated types report E2002. `return` outside a function reports E2003. Functions can see their own locals and globals; they do not capture enclosing function locals. See [scope](/docs/language/scope/).

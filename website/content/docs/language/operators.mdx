@@ -1,0 +1,19 @@
+export const meta = {"title":"Operators","description":"Combine values with arithmetic, comparisons, and boolean negation.","group":"Language","order":5};
+
+Expressions evaluate to values. Arithmetic requires integers, except `+` also concatenates two strings.
+
+## Syntax
+
+Arithmetic operators are `+`, `-`, `*`, and `/`. Multiplication and division bind more tightly than addition and subtraction. Use parentheses to group expressions. Comparisons include `==`, `!=`, `<`, `<=`, `>`, and `>=`; `not` negates a boolean.
+
+## Working example
+
+<Example id="operators" />
+
+## Updates
+
+Variables support `+=`, `-=`, `*=`, `/=`, and standalone `name++` or `name--` statements. Postfix updates are not expressions.
+
+## Common mistakes
+
+`%`, bitwise operators, `and`, and `or` are not implemented. Use nested conditions for multiple boolean checks. Integer division does not produce a fractional value.

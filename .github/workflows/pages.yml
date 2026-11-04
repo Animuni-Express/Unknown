@@ -1,0 +1,97 @@
+name: Unknown Trying — static hosts
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [sites, pages]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: website/package-lock.json
+      - name: Rust and WebAssembly target
+        run: |
+          rustup toolchain install stable --profile minimal --target wasm32-unknown-unknown
+          rustup default stable
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+            browser/target
+            crates/ush-core/target
+            .tools
+          key: ${{ runner.os }}-rust-bindgen-0.2.130-${{ hashFiles('**/Cargo.lock') }}
+      - name: JavaScript dependencies
+        run: npm ci --prefix website
+      - name: Binding generator
+        run: test -x .tools/bin/wasm-bindgen || cargo install wasm-bindgen-cli --version 0.2.130 --locked --root .tools
+      - name: Rust tests
+        run: |
+          cargo test --locked
+          cargo test --manifest-path crates/ush-core/Cargo.toml --locked
+          cargo test --manifest-path browser/Cargo.toml --locked
+      - name: WASM and Monaco assets
+        run: npm --prefix website run build:wasm
+      - name: Examples and WASM integration
+        run: |
+          npm --prefix website run test:examples
+          npm --prefix website run test:wasm
+      - name: TypeScript and unit tests
+        run: |
+          npm --prefix website run typecheck
+          npm --prefix website test
+      - name: Static production build
+        working-directory: website
+        env:
+          PAGES_BASE_PATH: /${{ github.event.repository.name }}
+          PAGES_SITE_URL: https://${{ github.repository_owner }}.github.io
+        run: npm run build:${{ matrix.target }}
+      - name: Chromium
+        working-directory: website
+        run: npx playwright install --with-deps chromium
+      - name: Production browser tests
+        working-directory: website
+        env:
+          TEST_BASE_PATH: ${{ matrix.target == 'pages' && format('/{0}', github.event.repository.name) || '' }}
+        run: npm run test:e2e
+      - name: Upload Sites build for review
+        if: matrix.target == 'sites'
+        uses: actions/upload-artifact@v4
+        with:
+          name: sites-static-export
+          path: website/out
+      - name: Upload Pages output
+        if: matrix.target == 'pages' && github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: website/out
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -36,8 +36,8 @@ pub enum Value {
     UserModule(Rc<ModuleScope>),
     BoundFunction(Box<Value>, Rc<ModuleScope>),
     Native(String, String),
-    File(Rc<RefCell<Option<std::fs::File>>>),
-    FileMethod(Rc<RefCell<Option<std::fs::File>>>, String),
+    File(Rc<RefCell<Option<ush_core::filesystem::File>>>),
+    FileMethod(Rc<RefCell<Option<ush_core::filesystem::File>>>, String),
     ProcessResult {
         stdout: String,
         stderr: String,

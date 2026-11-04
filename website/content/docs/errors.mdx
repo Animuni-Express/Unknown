@@ -1,0 +1,31 @@
+export const meta = {"title":"Errors and diagnostics","description":"Read original interpreter errors and find the relevant documentation.","group":"Reference","order":14};
+
+The playground displays the interpreter's original code, message, source location, and help. Monaco underlines the reported source range. **Go to error** focuses that position; **Copy error** copies the diagnostic.
+
+## Indentation
+
+E0001 and E0002 report tabs or inconsistent indentation. Use spaces consistently, or use braces. A colon requires an indented block.
+
+## Syntax
+
+E0003 reports an unexpected character; semicolons are unsupported. E0004 and E0005 concern string escapes and missing quotes. E0006 reports an integer literal outside the signed 64-bit range. E0007 reports an unclosed block comment. E1001 is a parser error: read its actual message for the expected token. Control conditions require parentheses.
+
+## Types and arguments
+
+E2001 reports an undefined name and may suggest a similar visible name. E2002 covers incompatible types, incorrect argument counts, invalid members, and non-callable values. The original message distinguishes these cases.
+
+## Control flow
+
+E2003 reports `return`, `break`, or `continue` outside its valid context. Loop control cannot cross a function boundary.
+
+## Runtime
+
+E2004 includes arithmetic overflow, division by zero, bad indices, and missing map keys. Runtime checks happen during execution, so earlier output is retained when a later statement fails.
+
+## Output
+
+E2005 reports output writer failure, including the playground's 64 KiB output limit. Print less data or reduce the iteration count.
+
+## Host operations
+
+E4001–E4003 cover module loading, exports, and cycles. E5001 and E5002 report host I/O failures or unsupported browser capabilities. Create missing files in the virtual workspace, or use the native CLI for machine-specific operations. Worker traps, initialization failures, and timeouts are reported separately without invented source positions or diagnostic codes.

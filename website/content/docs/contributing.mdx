@@ -1,0 +1,21 @@
+export const meta = {"title":"Contributing","description":"Develop the interpreter and website, validate examples, and report issues.","group":"Reference","order":15};
+
+Source lives in [Animuni-Express/Unknown](https://github.com/Animuni-Express/Unknown). Include a minimal `.unk` program, expected behavior, the original diagnostic, and your platform when reporting a problem.
+
+## Interpreter checks
+
+```sh
+cargo test --locked
+cargo test --manifest-path crates/ush-core/Cargo.toml --locked
+cargo test --manifest-path browser/Cargo.toml --locked
+```
+
+Unknown's lexer, parser, AST, diagnostics, and interpreter live in `src/`. The CLI and WASM adapter both depend on this library. The integrated USH core is in `crates/ush-core`.
+
+## Website checks
+
+See `website/README.md` for the pinned build prerequisites and deployment instructions. Run the example validator, TypeScript checks, unit tests, browser tests, and both production builds before releasing a change.
+
+## Documentation changes
+
+MDX content in `website/content/docs` generates navigation, section search, and table-of-contents entries. Runnable examples live in one shared catalogue and are automatically checked against the interpreter. Do not label a planned feature as implemented.

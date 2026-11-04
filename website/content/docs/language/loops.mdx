@@ -1,0 +1,23 @@
+export const meta = {"title":"Loops","description":"Repeat work with for, range, while, break, and continue.","group":"Language","order":7};
+
+`for` iterates a list or range. `while` repeats while a boolean condition remains true.
+
+## Syntax
+
+Write `for (name in range(end))`, optionally supplying `start` and `step`. The end is exclusive; a step cannot be zero. The iteration variable is local to the loop. A `while` condition also requires parentheses.
+
+## Working examples
+
+<Example id="loops" />
+
+<Example id="while" />
+
+## Skip or stop
+
+`continue` moves to the next iteration. `break` leaves the nearest loop. These statements do not cross function boundaries.
+
+<Example id="control" />
+
+## Common mistakes
+
+`range(3)` yields 0, 1, and 2. A new loop variable is unavailable after the loop. An infinite program is stopped by the playground's execution timeout; use **Stop** to cancel sooner.

@@ -8,4 +8,7 @@ name = "unk"
 path = "src/main.rs"
 
 [dependencies]
-ush-core = { path = "USH/rust-core" }
+ush-core = { path = "crates/ush-core" }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+web-time = "1"

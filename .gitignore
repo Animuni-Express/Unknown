@@ -1,2 +1,9 @@
 /target/
 /USH/
+/.tools/
+/browser/target/
+/crates/ush-core/target/
+/.sites-publish/
+/out/
+/.sites-artifacts/
+/.github-publish/

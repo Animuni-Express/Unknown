@@ -1,0 +1,21 @@
+export const meta = {"title":"Introduction","description":"Meet Unknown, its current capabilities, and the browser workspace.","group":"Getting started","order":0};
+
+Unknown is an independent programming language with a tree-walking interpreter written in Rust. This guide documents the implementation in this repository, version 0.1.0.
+
+## Start with a program
+
+Programs use newlines between statements. You can use indentation or braces for blocks. The playground executes the same Rust core as the native CLI through WebAssembly.
+
+<Example id="hello" />
+
+## What works today
+
+Variables, signed integers, strings, booleans, lists, maps, arithmetic, conditions, loops, functions, and file-based modules are implemented. Explicit types are checked at runtime. The language currently has no compiler or static semantic checker.
+
+The browser workspace supports both Unknown (`.unk`) and USH (`.ush`). Files are virtual and remain in this browser's local storage. Neither runtime can launch native programs from the website.
+
+## What is planned
+
+Floating-point values, fixed-width unsigned types, bitwise operators, `const`, and `constexpr` are not implemented. Hardware examples simulate logic; they do not access physical hardware.
+
+Continue with [installation](/docs/getting-started/installation/) or [hello world](/docs/getting-started/hello-world/).

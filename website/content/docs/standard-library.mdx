@@ -1,0 +1,37 @@
+export const meta = {"title":"Standard library","description":"Builtins, modules, and host-specific runtime capabilities.","group":"Reference","order":11};
+
+The built-in functions are `print`, `range`, `len`, `str`, and `open`. Native modules are imported using quoted names, optionally with a quoted alias.
+
+## Collections and text
+
+`len` accepts strings, lists, and maps. `str` converts a value to text. Lists have `append` and indexed reads and writes.
+
+<Example id="stdlib" />
+
+## Files
+
+`import "file"` provides `read(path)`, `write(path, text)`, `append(path, text)`, `exists(path)`, and `delete(path)`. `open(path, mode)` returns a handle with `read()`, `write(text)`, and `close()` for modes `r`, `w`, and `a`. Browser paths refer only to the virtual workspace.
+
+<Example id="files" />
+
+## Modules
+
+`import "greeter"` reads `greeter.unk` beside the importing file. Access exports with `greeter.name`. A module runs once per interpreter execution. Circular imports report E4003. The browser file explorer can create supporting `.unk` modules.
+
+## Host capabilities
+
+| Module | Native CLI | Browser |
+| --- | --- | --- |
+| `file`, `open` | Machine filesystem | Virtual files only |
+| `path` | Platform paths | Virtual POSIX paths |
+| `process.cwd`, `chdir`, `args` | Native state | Virtual directory, empty arguments |
+| `process.run`, `pid` | Native programs and process ID | Unavailable |
+| `unknown-shell.write`, `write_line`, `clear` | Terminal output | Captured output |
+| `unknown-shell.read_line` | Terminal input | Unavailable |
+| `envar` | Process environment | Unavailable |
+| `system.os`, `arch` | Native platform | WASM target identifiers |
+| `system.hostname`, `cpu_count` | Native information | Unavailable |
+| `time.now`, `monotonic` | Native clocks | Browser clocks |
+| `time.sleep` | Blocking sleep | Unavailable |
+
+Unsupported host operations produce an explicit error. No browser API grants filesystem, network, or native process access to Unknown programs.
